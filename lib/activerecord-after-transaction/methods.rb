@@ -16,8 +16,10 @@ module ActiveRecord::AfterTransaction
       logger && logger.debug("Push #{block}")
     end
 
+    private
+
     def execute_after_transaction
-      queue = @after_transaction_queue
+      queue = @after_transaction_queue ||= []
       if !queue.empty?
         logger && logger.debug("Execute the queue")
         queue = queue.dup
@@ -31,6 +33,7 @@ module ActiveRecord::AfterTransaction
 
     def clear_after_transaction
       logger && logger.debug("Clear the queue")
+      @after_transaction_queue ||= []
       @after_transaction_queue.clear
     end
   end

@@ -9,6 +9,34 @@ describe ActiveRecord::AfterTransaction::Methods do
   end
   subject { klass.new }
 
+  shared_examples 'without error' do
+    it 'does not raise error in the after_commit callback' do
+      step = 1
+      subject.class_eval do
+        after_commit do
+          step = 2
+        end
+      end
+      klass.transaction do
+        subject.save!
+      end
+      expect(step).to eq 2
+    end
+    it 'does not raise error in the after_rollback callback' do
+      step = 1
+      subject.class_eval do
+        after_rollback do
+          step = 2
+        end
+      end
+      klass.transaction do
+        subject.save!
+        raise ActiveRecord::Rollback
+      end
+      expect(step).to eq 2
+    end
+  end
+
   describe 'in a transaction' do
     it 'executes the proc after transaction' do
       step = 1
@@ -42,6 +70,10 @@ describe ActiveRecord::AfterTransaction::Methods do
         raise ActiveRecord::Rollback
       end
       expect(step).to eq 1
+    end
+    it_behaves_like 'without error'
+    describe 'with empty queue' do
+      it_behaves_like 'without error'
     end
   end
   describe 'not in a transaction' do
