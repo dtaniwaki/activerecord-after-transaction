@@ -18,11 +18,12 @@ module ActiveRecord::AfterTransaction
 
     def execute_after_transaction
       logger && logger.debug("Execute the queue")
-      @after_transaction_queue.each do |block|
+      queue = @after_transaction_queue.dup
+      clear_after_transaction
+      queue.each do |block|
         logger && logger.debug("Execute #{block}")
         block.call
       end
-      clear_after_transaction
     end
 
     def clear_after_transaction
