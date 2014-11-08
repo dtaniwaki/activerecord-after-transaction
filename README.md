@@ -45,16 +45,19 @@ And run `bundle install`.
 
 ## Usage
 
+Just enslose what you want to execute with `after_transaction`.
+
 ```ruby
 class Foo < ActiveRecord::Base
-  after_transition from: :draft, to: :published do
-    after_transaction do
-      UserMailer.notify_publish(record).deliver
-    end
-  end
-  after_transition from: :draft, to: :deleted do
-    after_transaction do
-      UserMailer.notify_publish(record).deliver
+  def after_transition(record, transition)
+    if transition.to == :published
+      after_transaction do
+        UserMailer.notify_publish(record).deliver
+      end
+    elsif transition.to == :deleted
+      after_transaction do
+        UserMailer.notify_delete(record).deliver
+      end
     end
   end
 end
