@@ -7,12 +7,12 @@ describe ActiveRecord::AfterTransaction::Methods do
       include ActiveRecord::AfterTransaction::Methods
     end
   end
-  subject { klass.new }
+  subject { klass.create! }
 
   shared_examples 'without error' do
     it 'does not raise error in the after_commit callback' do
       step = 1
-      subject.class_eval do
+      klass.class_eval do
         after_commit do
           step = 2
         end
@@ -24,7 +24,7 @@ describe ActiveRecord::AfterTransaction::Methods do
     end
     it 'does not raise error in the after_rollback callback' do
       step = 1
-      subject.class_eval do
+      klass.class_eval do
         after_rollback do
           step = 2
         end
@@ -83,7 +83,25 @@ describe ActiveRecord::AfterTransaction::Methods do
       subject.after_transaction do
         step = 2
       end
-      expect(step).to eq 1
+      expect(step).to eq 2
+    end
+  end
+  describe 'in another model transaction' do
+    let(:another_klass) do
+      create_tmp_model foo: :integer do
+        include ActiveRecord::AfterTransaction::Methods
+      end
+    end
+    it 'executes the proc after transaction' do
+      step = 1
+
+      another_klass.transaction do
+        subject.after_transaction do
+          step = 2
+        end
+        step = 3
+      end
+      expect(step).to eq 2
     end
   end
 end

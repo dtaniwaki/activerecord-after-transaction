@@ -10,7 +10,9 @@ module ActiveRecord::AfterTransaction
     end
 
     def after_transaction(&block)
-      return block.call unless self.class.connection.open_transactions
+      return block.call if self.class.connection.open_transactions == 0
+      self.class.connection.add_transaction_record self
+
       @after_transaction_queue ||= []
       @after_transaction_queue.push block
       logger && logger.debug("Push #{block}")
